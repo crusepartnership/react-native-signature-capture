@@ -33,7 +33,6 @@ public class RSSignatureCaptureView extends View {
 	private static final float HALF_STROKE_WIDTH = STROKE_WIDTH / 2;
 
 	private boolean mIsEmpty;
-	private OnSignedListener mOnSignedListener;
 	private int mMinWidth;
 	private int mMaxWidth;
 	private float mLastTouchX;
@@ -115,6 +114,10 @@ public class RSSignatureCaptureView extends View {
 		clear();
 	}
 
+	public boolean isEmpty(){
+		return this.mIsEmpty;
+	}
+
 	private void addPoint(TimedPoint newPoint) {
 		mPoints.add(newPoint);
 		if (mPoints.size() > 2) {
@@ -183,6 +186,9 @@ public class RSSignatureCaptureView extends View {
 
 			// Set the incremental stroke width and draw.
 			mPaint.setStrokeWidth(startWidth + ttt * widthDelta);
+			if (((int)drawSteps) != 0){
+				this.mIsEmpty = false;
+			}
 			mSignatureBitmapCanvas.drawPoint(x, y, mPaint);
 			expandDirtyRect(x, y);
 		}
@@ -270,7 +276,6 @@ public class RSSignatureCaptureView extends View {
                     resetDirtyRect(eventX, eventY);
                     addPoint(new TimedPoint(eventX, eventY));
                     getParent().requestDisallowInterceptTouchEvent(true);
-                    setIsEmpty(false);
                     sendDragEventToReact();
 			    }
                 dragged = false;
@@ -341,18 +346,6 @@ public class RSSignatureCaptureView extends View {
 		mDirtyRect.bottom = Math.max(mLastTouchY, eventY);
 	}
 
-
-	private void setIsEmpty(boolean newValue) {
-		mIsEmpty = newValue;
-		if (mOnSignedListener != null) {
-			if (mIsEmpty) {
-				mOnSignedListener.onClear();
-			} else {
-				mOnSignedListener.onSigned();
-			}
-		}
-	}
-
 	public void clear() {
 		dragged = false;
 		mPoints = new ArrayList<TimedPoint>();
@@ -365,8 +358,6 @@ public class RSSignatureCaptureView extends View {
 			ensureSignatureBitmap();
 		}
 
-		setIsEmpty(true);
-
 		invalidate();
 	}
 
@@ -374,9 +365,4 @@ public class RSSignatureCaptureView extends View {
 		return Math.round(dp*(getResources().getDisplayMetrics().xdpi/ DisplayMetrics.DENSITY_DEFAULT));
 	}
 
-	public interface OnSignedListener {
-		public void onSigned();
-
-		public void onClear();
-	}
 }
